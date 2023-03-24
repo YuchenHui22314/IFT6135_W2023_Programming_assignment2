@@ -32,31 +32,78 @@ class GRU(nn.Module):
         for param in self.parameters():
             nn.init.uniform_(param, a=-(1/hidden_size)**0.5, b=(1/hidden_size)**0.5)
 
-  def forward(self, inputs, hidden_states):
-        """GRU.
-        
-        This is a Gated Recurrent Unit
-        Parameters
-        ----------
-        inputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, input_size)`)
-          The input tensor containing the embedded sequences. input_size corresponds to embedding size.
-          
-        hidden_states (`torch.FloatTensor` of shape `(1, batch_size, hidden_size)`)
-          The (initial) hidden state.
-          
-        Returns
-        -------
-        outputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, hidden_size)`)
-          A feature tensor encoding the input sentence. 
-          
-        hidden_states (`torch.FloatTensor` of shape `(1, batch_size, hidden_size)`)
-          The final hidden state. 
-        """
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+    def GRUcell(self, inputs, hidden_states):
 
+        r = torch.sigmoid( 
+            torch.matmul(inputs, self.w_ir.t()) + self.b_ir +
+            torch.matmul(hidden_states, self.w_hr.t()) + self.b_hr
+        )   
+
+        z = torch.sigmoid(
+            torch.matmul(inputs, self.w_iz.t()) + self.b_iz +
+            torch.matmul(hidden_states, self.w_hz.t()) + self.b_hz
+        )
+
+        n = torch.tanh(
+            torch.matmul(inputs, self.w_in.t()) + self.b_in +
+            r * (torch.matmul(hidden_states, self.w_hn.t()) + self.b_hn)
+        )
+
+        # run on GPU
+        # on CPU using torch.float64.
+        # Note however that your implementation must also work with torch.float32 inputs and on
+        # a CUDA enabled device.
+        if z.device.type == 'cuda': 
+            one = torch.tensor(1, dtype=torch.float32).cuda()
+        else:
+            one = torch.tensor(1, dtype=torch.float64)
+
+        hidden_states = (one - z) * n + z * hidden_states
+
+        return hidden_states
+
+    def forward(self, inputs, hidden_states):
+            """GRU.
+            
+            This is a Gated Recurrent Unit that implements the following equations:
+            \begin{array}{ll}
+            r = \sigma(W_{ir} x + b_{ir} + W_{hr} h + b_{hr}) \\
+            z = \sigma(W_{iz} x + b_{iz} + W_{hz} h + b_{hz}) \\
+            n = \tanh(W_{in} x + b_{in} + r * (W_{hn} h + b_{hn})) \\
+            h' = (1 - z) * n + z * h
+            \end{array}
+
+            Parameters
+            ----------
+            inputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, input_size)`)
+            The input tensor containing the embedded sequences. input_size corresponds to embedding size.
+            
+            hidden_states (`torch.FloatTensor` of shape `(1, batch_size, hidden_size)`)
+            The (initial) hidden state.
+            
+            Returns
+            -------
+            outputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, hidden_size)`)
+            A feature tensor encoding the input sentence. 
+            
+            hidden_states (`torch.FloatTensor` of shape `(1, batch_size, hidden_size)`)
+            The final hidden state. 
+            """
+
+            outputs = []
+            hidden_states = hidden_states.squeeze(0)
+            for i in range(inputs.shape[1]):
+                hidden_states = self.GRUcell(inputs[:, i, :], hidden_states)
+                outputs.append(hidden_states)
+            
+            outputs = torch.stack(outputs, dim=1)
+            hidden_states = hidden_states.unsqueeze(0)
+
+            return outputs, hidden_states
+
+
+         
+        
 
 
 class Attn(nn.Module):
@@ -99,10 +146,12 @@ class Attn(nn.Module):
         x_attn (`torch.FloatTensor` of shape `(batch_size, sequence_length, 1)`)
             The attention vector.
         """
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+
+        encooder_outputs = inputs
+        decoder_hidden = hidden_states
+
+        # mask inputs
+
 
 
 class Encoder(nn.Module):
@@ -125,7 +174,10 @@ class Encoder(nn.Module):
         )
 
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = 
+        self.rnn = nn.GRU(
+            embedding_size, hidden_size, num_layers=num_layers, bidirectional=True,
+            batch_first=True
+        )
 
     def forward(self, inputs, hidden_states):
         """GRU Encoder.
@@ -147,10 +199,16 @@ class Encoder(nn.Module):
         hidden_states (`torch.FloatTensor` of shape `(num_layers, batch_size, hidden_size)`)
             The final hidden state. 
         """
+        #1. retrieve the embedding of the inputs
+        #2. apply dropout to the embeddings
+        #3. apply the GRU to the embeddings
+        #4. return the outputs and the hidden states
         # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+
+        embeddings = self.embedding(inputs)
+        embeddings = self.dropout(embeddings)
+        outputs, hidden_states = self.rnn(embeddings, hidden_states)
+        return outputs, hidden_states
 
     def initial_states(self, batch_size, device=None):
         if device is None:
