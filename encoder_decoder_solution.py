@@ -172,6 +172,8 @@ class Attn(nn.Module):
         x_attn = x_attn.masked_fill(mask, 0)
 
         outputs = torch.sum(encooder_outputs * x_attn, dim=1)
+        print(outputs)
+        print(x_attn)
 
         return outputs, x_attn
 
