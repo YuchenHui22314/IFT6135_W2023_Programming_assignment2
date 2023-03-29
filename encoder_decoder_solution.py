@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+torch.set_printoptions(threshold=torch.inf)
 
 class GRU(nn.Module):
     def __init__(
@@ -334,6 +334,8 @@ class EncoderDecoder(nn.Module):
         hidden_states (`torch.FloatTensor` of shape `(num_layers, batch_size, hidden_size)`)
             The final hidden state. 
         """
+        # print mask if mask is not None
+        print(mask)
         hidden_states = self.encoder.initial_states(inputs.shape[0])
         x, hidden_states = self.encoder(inputs, hidden_states)
         if self.encoder_only:
