@@ -124,6 +124,7 @@ class Attn(nn.Module):
 
 
     def forward(self, inputs, hidden_states, mask = None):
+        print(mask)
         """Soft Attention mechanism.
 
         This is a one layer MLP network that implements Soft (i.e. Bahdanau) Attention with masking
