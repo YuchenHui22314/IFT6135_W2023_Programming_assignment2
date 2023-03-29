@@ -169,7 +169,7 @@ class Attn(nn.Module):
         x_attn = self.softmax(x)
 
         mask = mask.unsqueeze(2)
-        x_attn = x_attn.masked_fill(mask, 0)
+        x_attn = x_attn*mask
 
         outputs = torch.sum(encooder_outputs * x_attn, dim=1)
         print(outputs)
