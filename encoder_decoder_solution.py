@@ -148,6 +148,13 @@ class Attn(nn.Module):
         x_attn (`torch.FloatTensor` of shape `(batch_size, sequence_length, 1)`)
             The attention vector.
         """
+        # swap mask 1 and 0
+        one = torch.tensor(1, dtype=torch.float32)
+        # if cuda available
+        if mask.device.type == 'cuda':
+            one = one.cuda()
+        if mask is not None:
+            mask = one - mask
 
         encooder_outputs = inputs
         decoder_hidden = hidden_states[-1].unsqueeze(1).repeat(1, encooder_outputs.shape[1], 1)
