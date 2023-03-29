@@ -140,15 +140,16 @@ class Attn(nn.Module):
 
         Returns
         -------
-        outputs (`torch.FloatTensor` of shape `(batch_size,  hidden_size)`)
-        yuchen: I removed sequence_length,
+        outputs (`torch.FloatTensor` of shape `(batch_size, sequence_length hidden_size)`)
+        yuchen: I removed sequence_length, emmm
             A feature tensor encoding the input sentence with attention applied.
 
         x_attn (`torch.FloatTensor` of shape `(batch_size, sequence_length, 1)`)
             The attention vector.
         """
         # exchange 1 and 0 within mask 
-        mask = 1 - mask
+        if mask is not None:
+            mask = 1 - mask
 
         encooder_outputs = inputs
         decoder_hidden = hidden_states[-1].unsqueeze(1).repeat(1, encooder_outputs.shape[1], 1)
@@ -164,7 +165,8 @@ class Attn(nn.Module):
         x_attn = self.softmax(x)
 
 
-        outputs = torch.sum(encooder_outputs * x_attn, dim=1)
+        # outputs = torch.sum(encooder_outputs * x_attn, dim=1)
+        outputs = encooder_outputs * x_attn
         print(outputs)
         print(x_attn)
 
@@ -294,6 +296,7 @@ class DecoderAttn(nn.Module):
         encoder_outputs = self.dropout(encoder_outputs)
         # context vector
         context_vector, _ = self.mlp_attn(encoder_outputs, decoder_hidden, mask)
+        context_vector = torch.sum(context_vector, dim=1)
         # fed to decoder
         outputs, hidden_states = self.rnn(context_vector, decoder_hidden)
 
