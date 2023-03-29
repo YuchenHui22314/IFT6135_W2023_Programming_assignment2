@@ -165,10 +165,9 @@ class Attn(nn.Module):
         x_attn = self.softmax(x)
 
 
+        # zhu jiao you du
         # outputs = torch.sum(encooder_outputs * x_attn, dim=1)
         outputs = encooder_outputs * x_attn
-        print(outputs)
-        print(x_attn)
 
         return outputs, x_attn
 
