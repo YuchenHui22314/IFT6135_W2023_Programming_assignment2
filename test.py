@@ -33,3 +33,7 @@ zyt = torch.nn.Linear(4,5)
 d3 = torch.randn(3,4,4)
 
 print(zyt(d3).shape)
+
+print("emmmmmmmmmmmmmmmmmmmmmmmmmm")
+st = torch.randn(3,4,4)
+print(st[:,0].shape)
