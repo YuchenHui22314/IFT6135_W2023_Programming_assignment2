@@ -344,10 +344,14 @@ class EncoderDecoder(nn.Module):
         """
         # print mask if mask is not None
         hidden_states = self.encoder.initial_states(inputs.shape[0])
+        print("input is\n", inputs)
         x, hidden_states = self.encoder(inputs, hidden_states)
+        print("x is\n",x)
+        print("555555555555555555")
         if self.encoder_only:
-          x = x[:, 0]
-          return x, hidden_states
+            x = x[:, 0]
+            print(" x[:, 0] is\n", x)
+            return x, hidden_states
         x, hidden_states = self.decoder(x, hidden_states, mask)
         print(x)
         print("6666666666666")
