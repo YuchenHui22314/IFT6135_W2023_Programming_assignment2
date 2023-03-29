@@ -140,7 +140,8 @@ class Attn(nn.Module):
 
         Returns
         -------
-        outputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, hidden_size)`)
+        outputs (`torch.FloatTensor` of shape `(batch_size,  hidden_size)`)
+        yuchen: I removed sequence_length,
             A feature tensor encoding the input sentence with attention applied.
 
         x_attn (`torch.FloatTensor` of shape `(batch_size, sequence_length, 1)`)
@@ -148,9 +149,20 @@ class Attn(nn.Module):
         """
 
         encooder_outputs = inputs
-        decoder_hidden = hidden_states
+        decoder_hidden = hidden_states[-1].unsqueeze(1).repeat(1, encooder_outputs.shape[1], 1)
 
-        # mask inputs
+        # compute attention weights
+        x = self.tanh(self.W(torch.cat((encooder_outputs, decoder_hidden), dim=2)))
+        x = self.V(x)
+        x = torch.sum(x, dim=2, keepdim=True)
+
+        if mask is not None:
+            x = x.masked_fill(mask.unsqueeze(2), -1e9)
+        
+        x_attn = self.softmax(x)
+        outputs = torch.sum(encooder_outputs * x_attn, dim=1)
+
+        return outputs, x_attn
 
 
 
@@ -208,6 +220,11 @@ class Encoder(nn.Module):
         embeddings = self.embedding(inputs)
         embeddings = self.dropout(embeddings)
         outputs, hidden_states = self.rnn(embeddings, hidden_states)
+        # sum bidirectional outputs
+        outputs = (outputs[:, :, :self.hidden_size] + outputs[:, :, self.hidden_size:])
+
+        # sum bidirectional hidden states
+        hidden_states = (hidden_states[:self.num_layers] + hidden_states[self.num_layers:])
         return outputs, hidden_states
 
     def initial_states(self, batch_size, device=None):
@@ -235,7 +252,9 @@ class DecoderAttn(nn.Module):
         self.num_layers = num_layers
         self.dropout = nn.Dropout(p=dropout)
 
-        self.rnn = 
+        self.rnn = nn.GRU(
+            hidden_size, hidden_size, num_layers=num_layers, batch_first=True 
+        )
         
         self.mlp_attn = Attn(hidden_size, dropout)
 
@@ -262,13 +281,22 @@ class DecoderAttn(nn.Module):
         hidden_states (`torch.FloatTensor` of shape `(num_layers, batch_size, hidden_size)`)
             The final hidden state. 
         """
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+
+        encoder_outputs = inputs
+        decoder_hidden = hidden_states 
+        # dropout on encoder outputs
+        encoder_outputs = self.dropout(encoder_outputs)
+        # context vector
+        context_vector, _ = self.mlp_attn(encoder_outputs, decoder_hidden, mask)
+        # fed to decoder
+        outputs, hidden_states = self.rnn(context_vector, decoder_hidden)
+
+        return outputs, hidden_states
+
         
         
 class EncoderDecoder(nn.Module):
+
     def __init__(
         self,
         vocabulary_size=30522,

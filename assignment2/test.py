@@ -21,3 +21,11 @@ t3 = torch.randn(3,3,4)
 print(t3[:,1,:].shape)
 st = torch.stack([t3[:,1,:], t3[:,2,:]], dim=1)
 print(st.shape)
+print(torch.__version__)
+
+
+print("shuuuuuuuuuuuuuuuuuuuu")
+zyt = torch.nn.Linear(4,5)
+d3 = torch.randn(3,4,4)
+
+print(zyt(d3).shape)
