@@ -1,5 +1,9 @@
 import torch
+# caole
 
+a = 0.0
+if 0.0 == False:
+    print("yiyang loves zhangyitian") 
 # Example 1
 t1 = torch.randn(3,1,4)
 t2 = torch.randn(3,1,4)
