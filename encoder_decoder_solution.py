@@ -124,7 +124,6 @@ class Attn(nn.Module):
 
 
     def forward(self, inputs, hidden_states, mask = None):
-        print(mask)
         """Soft Attention mechanism.
 
         This is a one layer MLP network that implements Soft (i.e. Bahdanau) Attention with masking
@@ -165,7 +164,7 @@ class Attn(nn.Module):
         x = torch.sum(x, dim=2, keepdim=True)
 
         if mask is not None:
-            x = x.masked_fill(mask.unsqueeze(2), -1e9)
+            x = x.masked_fill(mask.unsqueeze(2), -torch.inf)
         
         x_attn = self.softmax(x)
         outputs = torch.sum(encooder_outputs * x_attn, dim=1)
