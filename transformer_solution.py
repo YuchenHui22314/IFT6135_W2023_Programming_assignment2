@@ -66,10 +66,6 @@ class MultiHeadedAttention(nn.Module):
         self.linear_v = nn.Linear(num_heads * head_size, num_heads * head_size)
         self.linear_o = nn.Linear(num_heads * head_size, num_heads * head_size) 
 
-        self.Q_bias = nn.Parameter(torch.Tensor(num_heads * head_size))
-        self.K_bias = nn.Parameter(torch.Tensor(num_heads * head_size))
-        self.V_bias = nn.Parameter(torch.Tensor(num_heads * head_size))
-        self.O_bias = nn.Parameter(torch.Tensor(num_heads * head_size))
 
     def get_attention_weights(self, queries, keys, mask=None):
         """Compute the attention weights.
@@ -260,9 +256,9 @@ class MultiHeadedAttention(nn.Module):
         """
 
         #1. apply linear transformation to the input tensor
-        queries = self.linear_q(hidden_states) + self.Q_bias
-        keys = self.linear_k(hidden_states) + self.K_bias
-        values = self.linear_v(hidden_states) + self.V_bias
+        queries = self.linear_q(hidden_states)
+        keys = self.linear_k(hidden_states)
+        values = self.linear_v(hidden_states)
         #2. split the head vectors
         queries = self.split_heads(queries)
         keys = self.split_heads(keys)
@@ -270,7 +266,7 @@ class MultiHeadedAttention(nn.Module):
         #3. apply the attention mechanism
         outputs = self.apply_attention(queries, keys, values, mask) 
         #4. W_o * Y + b_o
-        outputs = self.linear_o(outputs) + self.O_bias 
+        outputs = self.linear_o(outputs) 
 
         return outputs
 
