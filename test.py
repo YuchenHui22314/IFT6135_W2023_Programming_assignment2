@@ -37,3 +37,8 @@ print(zyt(d3).shape)
 print("emmmmmmmmmmmmmmmmmmmmmmmmmm")
 st = torch.randn(3,4,4)
 print(st[:,0].shape)
+
+print("20230329")
+a = torch.randn(3,4,5,6)
+b = torch.randn(3,4,6,7)
+print(torch.matmul(a,b).shape)

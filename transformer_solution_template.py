@@ -34,11 +34,20 @@ class LayerNorm(nn.Module):
         outputs (`torch.FloatTensor` of shape `(*dims, hidden_size)`)
             The output tensor, having the same shape as `inputs`.
         """
+         
+        # mean and variance of the last dimension
+        mean = inputs.mean(-1, keepdim=True)
 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        # variance should be biased
+        variance = inputs.var(-1, keepdim=True, unbiased=False)
+
+        # normalize the inputs
+        normalized_inputs = (inputs - mean) / torch.sqrt(variance + self.eps)
+
+        # scale and shift
+        outputs = self.weight * normalized_inputs + self.bias
+
+        return outputs
 
     def reset_parameters(self):
         nn.init.ones_(self.weight)
@@ -52,9 +61,15 @@ class MultiHeadedAttention(nn.Module):
         self.num_heads = num_heads
         self.sequence_length = sequence_length
 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
+        self.linear_q = nn.Linear(num_heads * head_size, num_heads * head_size)
+        self.linear_k = nn.Linear(num_heads * head_size, num_heads * head_size)
+        self.linear_v = nn.Linear(num_heads * head_size, num_heads * head_size)
+        self.linear_o = nn.Linear(num_heads * head_size, num_heads * head_size) 
+
+        self.Q_bias = nn.Parameter(torch.Tensor(num_heads * head_size))
+        self.K_bias = nn.Parameter(torch.Tensor(num_heads * head_size))
+        self.V_bias = nn.Parameter(torch.Tensor(num_heads * head_size))
+        self.O_bias = nn.Parameter(torch.Tensor(num_heads * head_size))
 
     def get_attention_weights(self, queries, keys, mask=None):
         """Compute the attention weights.
@@ -88,10 +103,15 @@ class MultiHeadedAttention(nn.Module):
             Tensor containing the attention weights for all the heads and all
             the sequences in the batch.
         """
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        # 1. multiply the queries by the keys
+        S = torch.matmul(queries, keys.transpose(-1, -2))/math.sqrt(self.head_size)
+        # 2. apply the mask
+        if mask is not None:
+            S = S.masked_fill(mask == 0, -torch.inf)
+        # 3. compute the attention weights
+        attention_weights = F.softmax(S, dim=-1)
+        return attention_weights
+
         
     def apply_attention(self, queries, keys, values, mask=None):
         """Apply the attention.
@@ -134,11 +154,14 @@ class MultiHeadedAttention(nn.Module):
             Tensor containing the concatenated outputs of the attention for all
             the sequences in the batch, and all positions in each sequence. 
         """
+        #1. compute the attention weights
+        attention_weights = self.get_attention_weights(queries, keys, mask)
+        #2. apply the attention weights to the values
+        attended_values = torch.matmul(attention_weights, values)
+        #3. concatenate the attended values of all the heads
+        outputs = self.merge_heads(attended_values)
 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        return outputs
 
     def split_heads(self, tensor):
         """Split the head vectors.
@@ -164,10 +187,10 @@ class MultiHeadedAttention(nn.Module):
             definition of the input `tensor` above.
         """
 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        bs, seq_len = tensor.size(0), tensor.size(1)
+        tensor = tensor.view(bs, seq_len, self.num_heads, self.head_size)
+        tensor = tensor.transpose(1, 2)
+        return tensor
         
     def merge_heads(self, tensor):
         """Merge the head vectors.
@@ -192,10 +215,10 @@ class MultiHeadedAttention(nn.Module):
             definition of the input `tensor` above.
         """
 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        tensor = tensor.transpose(1, 2)
+        bs, seq_len = tensor.size(0), tensor.size(2)
+        tensor = tensor.contiguous().view(bs, seq_len, self.num_heads * self.head_size)
+        return tensor
 
     def forward(self, hidden_states, mask=None):
         """Multi-headed attention.
@@ -232,10 +255,19 @@ class MultiHeadedAttention(nn.Module):
             Tensor containing the output of multi-headed attention for all the
             sequences in the batch, and all positions in each sequence.
         """
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+
+        #1. apply linear transformation to the input tensor
+        queries = self.linear_queries(hidden_states) + self.Q_bias
+        keys = self.linear_keys(hidden_states) + self.K_bias
+        values = self.linear_values(hidden_states) + self.V_bias
+        #2. split the head vectors
+        queries = self.split_heads(queries)
+        keys = self.split_heads(keys)
+        values = self.split_heads(values)
+        #3. apply the attention mechanism
+        outputs = self.apply_attention(queries, keys, values, mask) 
+        #4. W_o * Y + b_o
+        outputs = self.linear_o(outputs) + self.O_bias 
 
 class PostNormAttentionBlock(nn.Module):
     
@@ -304,10 +336,13 @@ class PreNormAttentionBlock(nn.Module):
         
         
     def forward(self, x, mask=None):
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        x1_norm = self.layer_norm_1(x)
+        x1_attention_outputs = self.attn(x1_norm, mask)
+        x2 = x + x1_attention_outputs
+        x2_norm = self.layer_norm_2(x2)
+        x2_linear_outputs = self.linear(x2_norm)
+        outputs = x2 + x2_linear_outputs
+        return outputs
 
 
 class Transformer(nn.Module):
@@ -372,13 +407,12 @@ class Transformer(nn.Module):
         x = torch.cat([cls_token, x], dim=1)
         x = x + self.pos_embedding[:,:T+1]
         #Add dropout and then the transformer
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
+        x = self.dropout(x)
+        for layer in self.transformer:
+            x = layer(x, mask)
         
         #Take the cls token representation and send it to mlp_head
+        x = self.mlp_head(x[:,0])
+        return x
+         
  
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
