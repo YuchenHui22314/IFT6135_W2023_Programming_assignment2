@@ -109,8 +109,8 @@ class MultiHeadedAttention(nn.Module):
         S = torch.matmul(queries, keys.transpose(-1, -2))/math.sqrt(self.head_size)
         # 2. apply the mask
         if mask is not None:
-            mask = 1 - mask
-            S = S.masked_fill(mask.unsqueeze(1).unsqueeze(1), -torch.inf)
+            mask = 1 - mask.to(torch.int32)
+            S = S.masked_fill(mask.unsqueeze(1).unsqueeze(1).repeat(1, self.num_heads, self.sequence_length, 1), -1e9)
         # 3. compute the attention weights
         attention_weights = F.softmax(S, dim=-1)
         return attention_weights
