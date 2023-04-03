@@ -257,9 +257,9 @@ class MultiHeadedAttention(nn.Module):
         """
 
         #1. apply linear transformation to the input tensor
-        queries = self.linear_queries(hidden_states) + self.Q_bias
-        keys = self.linear_keys(hidden_states) + self.K_bias
-        values = self.linear_values(hidden_states) + self.V_bias
+        queries = self.linear_q(hidden_states) + self.Q_bias
+        keys = self.linear_k(hidden_states) + self.K_bias
+        values = self.linear_v(hidden_states) + self.V_bias
         #2. split the head vectors
         queries = self.split_heads(queries)
         keys = self.split_heads(keys)
