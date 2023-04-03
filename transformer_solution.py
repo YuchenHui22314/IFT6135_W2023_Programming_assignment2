@@ -156,7 +156,6 @@ class MultiHeadedAttention(nn.Module):
             Tensor containing the concatenated outputs of the attention for all
             the sequences in the batch, and all positions in each sequence. 
         """
-        print(mask)
         #1. compute the attention weights
         attention_weights = self.get_attention_weights(queries, keys, mask)
         #2. apply the attention weights to the values
@@ -190,8 +189,9 @@ class MultiHeadedAttention(nn.Module):
             definition of the input `tensor` above.
         """
 
-        bs, seq_len = tensor.size(0), tensor.size(1)
-        tensor = tensor.view(bs, seq_len, self.num_heads, self.head_size)
+        bs, seq_len = tensor.shape[:2]
+        hidden_size = tensor.shape[2]
+        tensor = tensor.view(bs, seq_len, self.num_heads, hidden_size // self.num_heads )
         tensor = tensor.transpose(1, 2)
         return tensor
         
@@ -220,7 +220,8 @@ class MultiHeadedAttention(nn.Module):
 
         tensor = tensor.transpose(1, 2)
         bs, seq_len = tensor.size(0), tensor.size(1)
-        tensor = tensor.contiguous().view(bs, seq_len, self.num_heads * self.head_size)
+        head_size = tensor.size(3)
+        tensor = tensor.contiguous().view(bs, seq_len, self.num_heads * head_size)
         return tensor
 
     def forward(self, hidden_states, mask=None):
