@@ -219,7 +219,7 @@ class MultiHeadedAttention(nn.Module):
         """
 
         tensor = tensor.transpose(1, 2)
-        bs, seq_len = tensor.size(0), tensor.size(2)
+        bs, seq_len = tensor.size(0), tensor.size(1)
         tensor = tensor.contiguous().view(bs, seq_len, self.num_heads * self.head_size)
         return tensor
 
