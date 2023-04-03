@@ -104,6 +104,7 @@ class MultiHeadedAttention(nn.Module):
             Tensor containing the attention weights for all the heads and all
             the sequences in the batch.
         """
+        print(mask)
         # 1. multiply the queries by the keys
         S = torch.matmul(queries, keys.transpose(-1, -2))/math.sqrt(self.head_size)
         # 2. apply the mask
