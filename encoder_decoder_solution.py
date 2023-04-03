@@ -343,8 +343,10 @@ class EncoderDecoder(nn.Module):
             The final hidden state. 
         """
         # print mask if mask is not None
+        print("zhangyitian shi gou")
         hidden_states = self.encoder.initial_states(inputs.shape[0])
         print("input is\n", inputs)
+        # flush the output
         x, hidden_states = self.encoder(inputs, hidden_states)
         print("x is\n",x)
         print("555555555555555555")
