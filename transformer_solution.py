@@ -273,6 +273,8 @@ class MultiHeadedAttention(nn.Module):
         #4. W_o * Y + b_o
         outputs = self.linear_o(outputs) + self.O_bias 
 
+        return outputs
+
 class PostNormAttentionBlock(nn.Module):
     
     def __init__(self, embed_dim, hidden_dim, num_heads, sequence_length, dropout=0.30):
