@@ -258,6 +258,7 @@ class MultiHeadedAttention(nn.Module):
             sequences in the batch, and all positions in each sequence.
         """
 
+        print(mask)
         #1. apply linear transformation to the input tensor
         queries = self.linear_q(hidden_states) + self.Q_bias
         keys = self.linear_k(hidden_states) + self.K_bias
