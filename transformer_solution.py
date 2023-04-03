@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+torch.set_printoptions(threshold=torch.inf)
 
 
 class LayerNorm(nn.Module):
@@ -154,6 +155,7 @@ class MultiHeadedAttention(nn.Module):
             Tensor containing the concatenated outputs of the attention for all
             the sequences in the batch, and all positions in each sequence. 
         """
+        print(mask)
         #1. compute the attention weights
         attention_weights = self.get_attention_weights(queries, keys, mask)
         #2. apply the attention weights to the values
