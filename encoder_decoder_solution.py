@@ -295,7 +295,7 @@ class DecoderAttn(nn.Module):
         encoder_outputs = self.dropout(encoder_outputs)
         # context vector
         context_vector, _ = self.mlp_attn(encoder_outputs, decoder_hidden, mask)
-        context_vector = torch.sum(context_vector, dim=1, keepdim=True).repeat(1, encoder_outputs.shape[1], 1)
+        #context_vector = torch.sum(context_vector, dim=1, keepdim=True).repeat(1, encoder_outputs.shape[1], 1)
         # fed to decoder
         outputs, hidden_states = self.rnn(context_vector, decoder_hidden)
 
