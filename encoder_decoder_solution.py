@@ -347,7 +347,7 @@ class EncoderDecoder(nn.Module):
         # flush the output
         x, hidden_states = self.encoder(inputs, hidden_states)
         if self.encoder_only:
-            x = x[:, 0]
+            x = x[:, 0].squeeze(1)
             return x, hidden_states
         x, hidden_states = self.decoder(x, hidden_states, mask)
         x = x[:, 0].squeeze(1)
