@@ -295,7 +295,7 @@ class DecoderAttn(nn.Module):
         encoder_outputs = self.dropout(encoder_outputs)
         # context vector
         context_vector, _ = self.mlp_attn(encoder_outputs, decoder_hidden, mask)
-        context_vector = torch.sum(context_vector, dim=1)
+        context_vector = torch.sum(context_vector, dim=1, keepdim=True)
         # fed to decoder
         outputs, hidden_states = self.rnn(context_vector, decoder_hidden)
 
@@ -320,7 +320,7 @@ class EncoderDecoder(nn.Module):
                 num_layers, dropout=dropout)
         if not encoder_only:
           self.decoder = DecoderAttn(vocabulary_size, embedding_size, hidden_size, num_layers, dropout=dropout)
-        
+
     def forward(self, inputs, mask=None):
         """GRU Encoder-Decoder network with Soft attention.
 
@@ -343,20 +343,12 @@ class EncoderDecoder(nn.Module):
             The final hidden state. 
         """
         # print mask if mask is not None
-        print("zhangyitian shi gou")
         hidden_states = self.encoder.initial_states(inputs.shape[0])
-        print("input is\n", inputs)
         # flush the output
         x, hidden_states = self.encoder(inputs, hidden_states)
-        print("x is\n",x)
-        print("555555555555555555")
         if self.encoder_only:
             x = x[:, 0]
-            print(" x[:, 0] is\n", x)
             return x, hidden_states
         x, hidden_states = self.decoder(x, hidden_states, mask)
-        print(x)
-        print("6666666666666")
         x = x[:, 0]
-        print(x)
         return x, hidden_states
