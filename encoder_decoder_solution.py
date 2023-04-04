@@ -343,12 +343,13 @@ class EncoderDecoder(nn.Module):
             The final hidden state. 
         """
         # print mask if mask is not None
+        print(inputs.shape)
         hidden_states = self.encoder.initial_states(inputs.shape[0])
         # flush the output
         x, hidden_states = self.encoder(inputs, hidden_states)
         if self.encoder_only:
-            x = x[:, 0].squeeze(1)
+            x = x[:, 0]#.squeeze(1)
             return x, hidden_states
         x, hidden_states = self.decoder(x, hidden_states, mask)
-        x = x[:, 0].squeeze(1)
+        x = x[:, 0]#.squeeze(1)
         return x, hidden_states
