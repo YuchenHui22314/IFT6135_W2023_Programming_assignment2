@@ -350,5 +350,5 @@ class EncoderDecoder(nn.Module):
             x = x[:, 0]
             return x, hidden_states
         x, hidden_states = self.decoder(x, hidden_states, mask)
-        x = x[:, 0]
+        x = x[:, 0].squeeze(1)
         return x, hidden_states
