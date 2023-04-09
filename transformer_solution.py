@@ -104,7 +104,7 @@ class MultiHeadedAttention(nn.Module):
         # 2. apply the mask
         if mask is not None:
             mask = 1 - mask.to(torch.int32)
-            S = S.masked_fill(mask.unsqueeze(1).unsqueeze(1).repeat(1, self.num_heads, self.sequence_length, 1), -torch.inf)
+            S = S.masked_fill(mask.unsqueeze(1).unsqueeze(1).repeat(1, self.num_heads, self.sequence_length, 1).bool(), -torch.inf)
         # 3. compute the attention weights
         attention_weights = F.softmax(S, dim=-1)
         return attention_weights
@@ -407,6 +407,10 @@ class Transformer(nn.Module):
         cls_token = self.cls_token.repeat(B, 1, 1)
         x = torch.cat([cls_token, x], dim=1)
         x = x + self.pos_embedding[:,:T+1]
+
+        # add cls to mask
+        mask = torch.cat([torch.ones(B,1).to(mask.device), mask], dim=1)
+
         #Add dropout and then the transformer
         x = self.dropout(x)
         for layer in self.transformer:

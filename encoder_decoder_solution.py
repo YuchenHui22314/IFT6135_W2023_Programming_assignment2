@@ -160,7 +160,7 @@ class Attn(nn.Module):
         x = torch.sum(x, dim=2, keepdim=True)
 
         if mask is not None:
-            x = x.masked_fill(mask.unsqueeze(2), -torch.inf)
+            x = x.masked_fill(mask.unsqueeze(2).bool(), -1e9)
         
         x_attn = self.softmax(x)
 
@@ -295,7 +295,7 @@ class DecoderAttn(nn.Module):
         encoder_outputs = self.dropout(encoder_outputs)
         # context vector
         context_vector, _ = self.mlp_attn(encoder_outputs, decoder_hidden, mask)
-        #context_vector = torch.sum(context_vector, dim=1, keepdim=True).repeat(1, encoder_outputs.shape[1], 1)
+        # context_vector = torch.sum(context_vector, dim=1, keepdim=True).repeat(1, encoder_outputs.shape[1], 1)
         # fed to decoder
         outputs, hidden_states = self.rnn(context_vector, decoder_hidden)
 
@@ -314,7 +314,7 @@ class EncoderDecoder(nn.Module):
         dropout = 0.0,
         encoder_only=False
         ):
-        super(EncoderDecoder, self).__init__()
+        super().__init__()
         self.encoder_only = encoder_only
         self.encoder = Encoder(vocabulary_size, embedding_size, hidden_size,
                 num_layers, dropout=dropout)
@@ -343,7 +343,6 @@ class EncoderDecoder(nn.Module):
             The final hidden state. 
         """
         # print mask if mask is not None
-        print(inputs.shape)
         hidden_states = self.encoder.initial_states(inputs.shape[0])
         # flush the output
         x, hidden_states = self.encoder(inputs, hidden_states)
